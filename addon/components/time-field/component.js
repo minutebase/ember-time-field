@@ -49,11 +49,19 @@ export default Component.extend({
 
   focusIn() {
     console.log("focus in");
-    this._selectHours();
+    this._selectSection();
   },
 
   focusOut() {
     console.log("focus out");
+  },
+
+  click() {
+    this._selectSection();
+  },
+
+  _selectSection() {
+    this._selectHours();
   },
 
   _selectHours() {
