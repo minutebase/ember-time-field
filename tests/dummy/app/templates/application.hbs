@@ -1,3 +1,29 @@
-<h2 id="title">Welcome to Ember</h2>
+<h2 id="title">ember-time-field</h2>
 
-{{outlet}}
+<p>
+  {{time-field value=time on-change=(action "timeChanged") on-invalid=(action "invalidTime") hour12=hour12}}
+</p>
+
+<p>
+  Value: {{time.hours}}:{{time.minutes}}
+</p>
+
+{{#if isInvalid}}
+  <p>
+    Time is invalid
+  </p>
+{{/if}}
+
+<p>
+  <button {{action "toggleHour"}}>Toggle 12/24 hour</button>
+</p>
+
+<h3>Actions</h3>
+
+<p>
+  <code>on-change</code> is called when a valid time is input.
+</p>
+
+<p>
+  <code>on-invalid</code> is called when an invalid time is input so you can display validation messages.
+</p>
