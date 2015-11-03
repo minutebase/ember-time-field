@@ -27,8 +27,9 @@ export default Component.extend({
 
   hour12: false,
 
-  hours:   null,
+  hours:   null, // always 24 hour, so doesn't reflect period
   minutes: null,
+
   period:  'am',
 
   init() {
@@ -38,17 +39,27 @@ export default Component.extend({
     }));
   },
 
-  hoursInRange: Ember.computed("hour12", {
+  hoursForRange: Ember.computed("hours", "hour12", {
     get() {
-      return this.get("hour12") ? 12 : 24;
+      const { hours, hour12 } = this.getProperties("hours", "hour12");
+      if (isNone(hours)) {
+        return;
+      }
+
+      if (hour12) {
+        const h = hours % 12;
+        return h === 0 ? 12 : h;
+      } else {
+        return hours;
+      }
     }
   }),
 
-  _value: computed("hours", "minutes", "period", "hour12", {
+  _value: computed("hoursForRange", "minutes", "period", "hour12", {
     get() {
-      const { hours, minutes, period, hour12 } = this.getProperties("hours", "minutes", "period", "hour12");
-      const hoursValue   = isNone(hours)   ? '--' : pad(hours);
-      const minutesValue = isNone(minutes) ? '--' : pad(minutes);
+      const { hoursForRange, minutes, period, hour12 } = this.getProperties("hoursForRange", "minutes", "period", "hour12");
+      const hoursValue   = isNone(hoursForRange) ? '--' : pad(hoursForRange);
+      const minutesValue = isNone(minutes)       ? '--' : pad(minutes);
 
       let str = `${hoursValue}:${minutesValue}`;
       if (hour12) {
@@ -164,17 +175,10 @@ export default Component.extend({
     if (isNone(hours)) {
       this.set("hours", 0);
     } else {
-      this.set("hours", this.modHourForRange(hours + amnt));
+      this.set("hours", mod(hours + amnt, 24));
     }
 
     this.valueChanged();
-  },
-
-  modHourForRange(hour) {
-    if (isNone(hour)) {
-      return;
-    }
-    return mod(hour, this.get("hoursInRange"));
   },
 
   decrementHours() {
@@ -191,7 +195,7 @@ export default Component.extend({
     if (isNone(current)) {
       this.set("hours", hours);
     } else {
-      this.set("hours", Math.min(current * 10 + hours, this.get("hoursInRange") - 1));
+      this.set("hours", Math.min(current * 10 + hours, 24 - 1));
     }
 
     this.valueChanged();
@@ -234,7 +238,25 @@ export default Component.extend({
   },
 
   changePeriod(period) {
-    this.set("period", period);
+    const currentPeriod = this.get("period");
+    if (currentPeriod === period) {
+      return;
+    }
+
+    const currentHours = this.get("hours");
+    let hours;
+    if (!isNone(currentHours)) {
+      if (period === "am") {
+        hours = currentHours - 12;
+      } else {
+        hours = currentHours + 12;
+      }
+    }
+
+    this.setProperties({
+      period, hours
+    });
+
     this.valueChanged();
   },
 
@@ -249,10 +271,9 @@ export default Component.extend({
     let period  = "am";
 
     if (value) {
-      const hourValue = Ember.get(value, "hours");
-      hours   = this.modHourForRange(hourValue);
+      hours   = Ember.get(value, "hours");
       minutes = Ember.get(value, "minutes");
-      if (hourValue >= 12) {
+      if (hours >= 12) {
         period = "pm";
       }
     }
@@ -273,11 +294,7 @@ export default Component.extend({
     this.updateDOMValue();
     this.get("stateManager").send("focusIn");
 
-    let { hours, minutes, period, hour12 } = this.getProperties("hours", "minutes", "period", "hour12");
-
-    if (hour12 && period === 'pm' && !isNone(hours)) {
-      hours = hours + 12;
-    }
+    let { hours, minutes } = this.getProperties("hours", "minutes");
 
     this.sendAction("on-change", {
       hours, minutes
