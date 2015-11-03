@@ -70,14 +70,6 @@ export default Component.extend({
     }
   }),
 
-  input() {
-    this._handleChangeEvent();
-  },
-
-  change() {
-    this._handleChangeEvent();
-  },
-
   triggerStateEvent(name) {
     this.get("stateManager").send(name);
   },
