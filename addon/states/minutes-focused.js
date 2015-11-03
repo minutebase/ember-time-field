@@ -16,7 +16,7 @@ export default State.create({
       const num = keyCodeToNumber(code);
       manager.get("input").setMinutes(num);
 
-      if (num <= 2) {
+      if (num <= 5) {
         manager.transitionTo("digit2");
       } else if (manager.get("input.hour12")) {
         manager.transitionTo("period");
