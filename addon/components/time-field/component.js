@@ -4,7 +4,8 @@ const KEY_CODES = {
   UP:    38,
   DOWN:  40,
   LEFT:  37,
-  RIGHT: 39
+  RIGHT: 39,
+  TAB:   9
 };
 
 const {
@@ -292,11 +293,24 @@ export default Component.extend({
     this.get("stateManager").send(name);
   },
 
+  // for now just ignore tab
+  shouldHandleKey(code) {
+    return code !== KEY_CODES.TAB;
+  },
+
   keyUp(e) {
+    if (!this.shouldHandleKey(e.keyCode)) {
+      return;
+    }
+
     e.preventDefault();
   },
 
   keyDown(e) {
+    if (!this.shouldHandleKey(e.keyCode)) {
+      return;
+    }
+
     e.preventDefault();
 
     switch (e.keyCode) {
