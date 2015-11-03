@@ -6,6 +6,8 @@ const {
   computed
 } = Ember;
 
+import pad from '../../utils/pad';
+
 const KEY_CODES = {
   UP:    38,
   DOWN:  40,
@@ -19,15 +21,6 @@ const RANGES = {
   MINUTE: { START: 3, END: 5 },
   PERIOD: { START: 6, END: 8 }
 };
-
-function pad(val) {
-  const str = String(val);
-  if (str.length === 1) {
-    return `0${str}`;
-  } else {
-    return str;
-  }
-}
 
 // wrapping mod
 function mod(n, m) {
@@ -215,7 +208,8 @@ const PeriodFocusedState  = State.create({
 const UnfocusedState = State.create({
   focusIn(manager) {
     manager.transitionTo("focused.hours");
-  }
+  },
+  refocus() {}
 });
 
 const FocusedState = State.create({
@@ -225,6 +219,10 @@ const FocusedState = State.create({
 
   focusOut(manager) {
     manager.transitionTo("unfocused");
+  },
+
+  refocus(manager) {
+    manager.send("focusIn");
   },
 
   left() {
@@ -255,7 +253,7 @@ export default Component.extend({
 
   hours:   null,
   minutes: null,
-  period:  null,
+  period:  'am',
 
   init() {
     this._super();
@@ -264,7 +262,11 @@ export default Component.extend({
     }));
   },
 
-  _sanitizedValue: '', // cached value to check changes
+  hoursInRange: Ember.computed("hour12", {
+    get() {
+      return this.get("hour12") ? 12 : 24;
+    }
+  }),
 
   _value: computed("hours", "minutes", "period", "hour12", {
     get() {
@@ -386,10 +388,17 @@ export default Component.extend({
     if (isNone(hours)) {
       this.set("hours", 0);
     } else {
-      this.set("hours", mod(hours + amnt, 24)); // TODO - 12 for 12hour clock
+      this.set("hours", this.modHourForRange(hours + amnt));
     }
 
-    this.reRenderAfterUserInput();
+    this.valueChanged();
+  },
+
+  modHourForRange(hour) {
+    if (isNone(hour)) {
+      return;
+    }
+    return mod(hour, this.get("hoursInRange"));
   },
 
   decrementHours() {
@@ -398,7 +407,7 @@ export default Component.extend({
 
   setHours(hours) {
     this.set("hours", hours);
-    this.reRenderAfterUserInput();
+    this.valueChanged();
   },
 
   setHoursDigit2(hours) {
@@ -406,10 +415,10 @@ export default Component.extend({
     if (isNone(current)) {
       this.set("hours", hours);
     } else {
-      this.set("hours", Math.min(current * 10 + hours, 23)); // TODO - 12 for 12 hour clock
+      this.set("hours", Math.min(current * 10 + hours, this.get("hoursInRange") - 1));
     }
 
-    this.reRenderAfterUserInput();
+    this.valueChanged();
   },
 
   incrementMinutes(amnt=1) {
@@ -420,7 +429,7 @@ export default Component.extend({
       this.set("minutes", mod(minutes + amnt, 60));
     }
 
-    this.reRenderAfterUserInput();
+    this.valueChanged();
   },
 
   decrementMinutes() {
@@ -429,7 +438,7 @@ export default Component.extend({
 
   setMinutes(minutes) {
     this.set("minutes", minutes);
-    this.reRenderAfterUserInput();
+    this.valueChanged();
   },
 
   setMinutesDigit2(minutes) {
@@ -440,7 +449,7 @@ export default Component.extend({
       this.set("minutes", current * 10 + minutes);
     }
 
-    this.reRenderAfterUserInput();
+    this.valueChanged();
   },
 
   togglePeriod() {
@@ -450,55 +459,48 @@ export default Component.extend({
 
   changePeriod(period) {
     this.set("period", period);
-    this.reRenderAfterUserInput();
+    this.valueChanged();
   },
 
-  // _handleChangeEvent() {
-  //   this._processNewValue(this.readDOMAttr('value'));
-  // },
-  //
-  // _processNewValue(rawValue) {
-  //   const value = this.sanitizeInput(rawValue);
-  //
-  //   if (this._sanitizedValue !== value) {
-  //     this._sanitizedValue = value;
-  //
-  //     const match = value.match(/^(\d{1,2}):(\d{2})\W*(am|pm)?$/);
-  //     if (match) {
-  //       const hours   = Number(match[1]);
-  //       const minutes = Number(match[2]);
-  //
-  //       this.sendAction("on-change", {
-  //         hours,
-  //         minutes
-  //       });
-  //     } else {
-  //       this.sendAction("on-invalid", value);
-  //     }
-  //   }
-  // },
+  // translates 24 hour to 12 hour if necessary
+  // TODO - store everything internally as 24 hour so we don't need to do this here
+  didReceiveAttrs() {
+    this._super();
 
-  // _setFromValue(value) {
-  //   if (value) {
-  //     this.setProperties(value);
-  //   } else {
-  //     this.setProperties({ hours: null, minutes: null });
-  //   }
-  // },
+    const value = this.get("value");
+    let hours   = null;
+    let minutes = null;
 
-  sanitizeInput(input) {
-    return input || '';
+    if (value) {
+      hours   = this.modHourForRange(Ember.get(value, "hours"));
+      minutes = Ember.get(value, "minutes");
+    }
+
+    this.setProperties({
+      hours, minutes
+    });
   },
 
   didRender() {
     this.updateDOMValue();
+    this.get("stateManager").send("refocus");
   },
 
   // TODO - could use attribute binding but we want to re-focus
   //        and if we do that in run.next or afterRender we still get a cursor change
-  reRenderAfterUserInput() {
+  valueChanged() {
     this.updateDOMValue();
     this.get("stateManager").send("focusIn");
+
+    let { hours, minutes, period, hour12 } = this.getProperties("hours", "minutes", "period", "hour12");
+
+    if (hour12 && period === 'pm' && !isNone(hours)) {
+      hours = hours + 12;
+    }
+
+    this.sendAction("on-change", {
+      hours, minutes
+    });
   },
 
   updateDOMValue() {
