@@ -244,6 +244,8 @@ const EventManager = StateManager.extend({
 });
 
 export default Component.extend({
+  classNames: 'time-field',
+
   tagName: 'input',
   type: 'text',
   autocomplete: false,
