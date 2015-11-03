@@ -246,14 +246,19 @@ export default Component.extend({
     const value = this.get("value");
     let hours   = null;
     let minutes = null;
+    let period  = "am";
 
     if (value) {
-      hours   = this.modHourForRange(Ember.get(value, "hours"));
+      const hourValue = Ember.get(value, "hours");
+      hours   = this.modHourForRange(hourValue);
       minutes = Ember.get(value, "minutes");
+      if (hourValue >= 12) {
+        period = "pm";
+      }
     }
 
     this.setProperties({
-      hours, minutes
+      hours, minutes, period
     });
   },
 
