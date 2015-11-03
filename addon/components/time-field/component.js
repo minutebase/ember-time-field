@@ -237,7 +237,7 @@ const FocusedState = State.create({
 });
 
 const EventManager = StateManager.extend({
-  enableLogging: true,
+  // enableLogging: true,
   initialState: 'unfocused',
   unfocused:    UnfocusedState,
   focused:      FocusedState
