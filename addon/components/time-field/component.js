@@ -184,17 +184,24 @@ const PeriodFocusedState  = State.create({
   },
 
   up(manager) {
-    manager.get("input").changePeriod();
+    manager.get("input").togglePeriod();
   },
 
   down(manager) {
-    manager.get("input").changePeriod();
+    manager.get("input").togglePeriod();
   },
 
   // TODO - intl
   key(manager, code) {
-    // respond to am/pm
-    console.log(code);
+    switch (code) {
+      case 'A'.charCodeAt(0):
+        manager.get("input").changePeriod("am");
+        break;
+
+      case 'P'.charCodeAt(0):
+        manager.get("input").changePeriod("pm");
+        break;
+    }
   }
 });
 
@@ -308,6 +315,7 @@ export default Component.extend({
     case KEY_CODES.DOWN:
       this.get("stateManager").send("down");
       break;
+
     default:
       this.get("stateManager").send("key", e.keyCode);
       break;
@@ -403,9 +411,13 @@ export default Component.extend({
     this.reRenderAfterUserInput();
   },
 
-  changePeriod() {
+  togglePeriod() {
     const period = this.get("period");
-    this.set("period", period === "am" ? "pm" : "am");
+    this.changePeriod(period === "am" ? "pm" : "am");
+  },
+
+  changePeriod(period) {
+    this.set("period", period);
     this.reRenderAfterUserInput();
   },
 
