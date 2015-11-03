@@ -1,7 +1,7 @@
 {
   "name": "ember-time-field",
   "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "description": "Time field for ember with keyboard navigation",
   "directories": {
     "doc": "doc",
     "test": "tests"
@@ -11,11 +11,14 @@
     "start": "ember server",
     "test": "ember try:testall"
   },
-  "repository": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minutebase/ember-time-field.git"
+  },
   "engines": {
     "node": ">= 0.10.0"
   },
-  "author": "",
+  "author": "Richard Livsey <richard@minutebase.com>",
   "license": "MIT",
   "devDependencies": {
     "broccoli-asset-rev": "^2.1.2",
