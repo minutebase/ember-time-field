@@ -50,6 +50,7 @@
     "ember-states": "1.13.0-beta"
   },
   "ember-addon": {
-    "configPath": "tests/dummy/config"
+    "configPath": "tests/dummy/config",
+    "demoURL": "http://minutebase.github.io/ember-time-field/"
   }
 }
