@@ -1,31 +1,275 @@
 import Ember from 'ember';
 
+const KEY_CODES = {
+  UP:    38,
+  DOWN:  40,
+  LEFT:  37,
+  RIGHT: 39
+};
+
 const {
   Component,
   isNone,
   computed
 } = Ember;
 
-// TODO - manually seet the raw value and maintain cursor position etc
-// TODO - set cursor selection on date parts and move along as you type
-// TODO - skip over the : when typing so can just do 1145 for 11:45
+function pad(val) {
+  const str = String(val);
+  if (str.length === 1) {
+    return `0${str}`;
+  } else {
+    return str;
+  }
+}
+
+// wrapping mod
+function mod(n, m) {
+  return ((n % m) + m) % m;
+}
+
+const NUM_KEYS_START = 48;
+const NUM_KEYS_END   = 57;
+const NUM_PAD_START  = 96;
+const NUM_PAD_END    = 105;
+
+function isNumberCode(code) {
+  return (code >= NUM_KEYS_START && code <= NUM_KEYS_END) ||
+         (code >= NUM_PAD_START && code <= NUM_PAD_END);
+}
+
+function keyCodeToNumber(code) {
+  if (code >= NUM_KEYS_START && code <= NUM_KEYS_END) {
+    return code - NUM_KEYS_START;
+  } else if (code >= NUM_PAD_START && code <= NUM_PAD_END) {
+    return code - NUM_PAD_START;
+  } else {
+    return null;
+  }
+}
+
+import StateManager from "ember-states/state-manager";
+import State from "ember-states/state";
+
+const HoursFocusedState = State.create({
+  initialState: "digit1",
+
+  digit1: State.create({
+    key(manager, code) {
+      if (!isNumberCode(code)) {
+        return; // no-op
+      }
+
+      const num = keyCodeToNumber(code);
+      manager.get("input").setHours(num);
+
+      if (num <= 2) {
+        manager.transitionTo("digit2");
+      } else {
+        manager.transitionTo("minutes");
+      }
+    }
+  }),
+
+  digit2: State.create({
+    key(manager, code) {
+      if (!isNumberCode(code)) {
+        return; // no-op
+      }
+
+      const num = keyCodeToNumber(code);
+      manager.get("input").setHoursDigit2(num);
+      manager.transitionTo("minutes");
+    }
+  }),
+
+  enter(manager) {
+    this.focusIn(manager);
+  },
+
+  focusIn(manager) {
+    manager.get("input").selectHours();
+  },
+
+  right(manager) {
+    manager.transitionTo("minutes");
+  },
+
+  up(manager) {
+    manager.get("input").incrementHours();
+  },
+
+  down(manager) {
+    manager.get("input").decrementHours();
+  }
+
+});
+
+const MinutesFocusedState = State.create({
+  initialState: "digit1",
+
+  digit1: State.create({
+    key(manager, code) {
+      if (!isNumberCode(code)) {
+        return; // no-op
+      }
+
+      const num = keyCodeToNumber(code);
+      manager.get("input").setMinutes(num);
+
+      if (num <= 2) {
+        manager.transitionTo("digit2");
+      } else if (manager.get("input.hour12")) {
+        manager.transitionTo("period");
+      }
+    }
+  }),
+
+  digit2: State.create({
+    key(manager, code) {
+      if (!isNumberCode(code)) {
+        return; // no-op
+      }
+
+      const num = keyCodeToNumber(code);
+      manager.get("input").setMinutesDigit2(num);
+
+      if (manager.get("input.hour12")) {
+        manager.transitionTo("period");
+      } else {
+        manager.transitionTo("digit1");
+      }
+    }
+  }),
+
+  enter(manager) {
+    this.focusIn(manager);
+  },
+
+  focusIn(manager) {
+    manager.get("input").selectMinutes();
+  },
+
+  left(manager) {
+    manager.transitionTo("hours");
+  },
+
+  right(manager) {
+
+    // TODO - better way to guard this, or not have the period state at all unless hour12 is true?
+    if (manager.get("input.hour12")) {
+      manager.transitionTo("period");
+    }
+  },
+
+  up(manager) {
+    manager.get("input").incrementMinutes();
+  },
+
+  down(manager) {
+    manager.get("input").decrementMinutes();
+  }
+});
+
+const PeriodFocusedState  = State.create({
+  enter(manager) {
+    this.focusIn(manager);
+  },
+
+  focusIn(manager) {
+    manager.get("input").selectPeriod();
+  },
+
+  left(manager) {
+    manager.transitionTo("minutes");
+  },
+
+  up(manager) {
+    manager.get("input").changePeriod();
+  },
+
+  down(manager) {
+    manager.get("input").changePeriod();
+  },
+
+  // TODO - intl
+  key(manager, code) {
+    // respond to am/pm
+    console.log(code);
+  }
+});
+
+const UnfocusedState = State.create({
+  focusIn(manager) {
+    manager.transitionTo("focused.hours");
+  },
+
+  click(manager) {
+    manager.transitionTo("focused.hours");
+  }
+});
+
+const FocusedState = State.create({
+  hours:    HoursFocusedState,
+  minutes:  MinutesFocusedState,
+  period:   PeriodFocusedState,
+
+  focusOut(manager) {
+    manager.transitionTo("unfocused");
+  },
+
+  click() {
+    console.log("clicked, figure out where");
+  },
+
+  left() {
+    // no-op if not handled by child
+  },
+
+  right() {
+    // no-op if not handled by child
+  }
+});
+
+const EventManager = StateManager.extend({
+  enableLogging: true,
+  initialState: 'unfocused',
+  unfocused:    UnfocusedState,
+  focused:      FocusedState
+});
 
 export default Component.extend({
   tagName: 'input',
   type: 'text',
-  attributeBindings: ['type', '_value:value', 'placeholder', 'name', 'autocomplete'],
+  autocomplete: false,
+  attributeBindings: ['type', 'placeholder', 'name', 'autocomplete'],
+
+  hour12: false,
 
   hours:   null,
   minutes: null,
+  period:  null,
+
+  init() {
+    this._super();
+    this.set("stateManager", EventManager.create({
+      input: this
+    }));
+  },
 
   _sanitizedValue: '', // cached value to check changes
 
-  _value: computed("hours", "minutes", {
+  _value: computed("hours", "minutes", "period", "hour12", {
     get() {
-      const { hours, minutes } = this.getProperties("hours", "minutes");
-      const hoursValue   = isNone(hours)   ? '--' : hours;
-      const minutesValue = isNone(minutes) ? '--' : minutes;
-      return `${hoursValue}:${minutesValue}`;
+      const { hours, minutes, period, hour12 } = this.getProperties("hours", "minutes", "period", "hour12");
+      const hoursValue   = isNone(hours)   ? '--' : pad(hours);
+      const minutesValue = isNone(minutes) ? '--' : pad(minutes);
+
+      let str = `${hoursValue}:${minutesValue}`;
+      if (hour12) {
+        const periodValue = isNone(period) ? '--' : period; // format?
+        str = `${str} ${periodValue}`;
+      }
+      return str;
     }
   }),
 
@@ -37,84 +281,185 @@ export default Component.extend({
     this._handleChangeEvent();
   },
 
+  triggerStateEvent(name) {
+    this.get("stateManager").send(name);
+  },
+
   keyUp(e) {
     e.preventDefault();
-    console.log("keyUp", e);
   },
 
   keyDown(e) {
     e.preventDefault();
-    console.log("keyDown", e);
+
+    switch (e.keyCode) {
+    case KEY_CODES.LEFT:
+      this.get("stateManager").send("left");
+      break;
+
+    case KEY_CODES.RIGHT:
+      this.get("stateManager").send("right");
+      break;
+
+    case KEY_CODES.UP:
+      this.get("stateManager").send("up");
+      break;
+
+    case KEY_CODES.DOWN:
+      this.get("stateManager").send("down");
+      break;
+    default:
+      this.get("stateManager").send("key", e.keyCode);
+      break;
+    }
   },
 
   focusIn() {
-    console.log("focus in");
-    this._selectSection();
+    this.get("stateManager").send("focusIn");
   },
 
   focusOut() {
-    console.log("focus out");
+    this.get("stateManager").send("focusOut");
   },
 
   click() {
-    this._selectSection();
+    this.get("stateManager").send("click");
   },
 
-  _selectSection() {
-    this._selectHours();
-  },
-
-  _selectHours() {
+  // [--]:-- --
+  selectHours() {
     this.get("element").setSelectionRange(0, 2);
   },
 
-  _selectMinutes() {
+  // --:[--] --
+  selectMinutes() {
     this.get("element").setSelectionRange(3, 5);
   },
 
-  _selectPeriod() {
-    // TODO - for AM/PM
+  // --:-- [--]
+  selectPeriod() {
+    this.get("element").setSelectionRange(6, 8);
   },
 
-  _handleChangeEvent() {
-    this._processNewValue(this.readDOMAttr('value'));
-  },
-
-  _processNewValue(rawValue) {
-    const value = this.sanitizeInput(rawValue);
-
-    if (this._sanitizedValue !== value) {
-      this._sanitizedValue = value;
-
-      const match = value.match(/^(\d{1,2}):(\d{2})\W*(am|pm)?$/);
-      if (match) {
-        const hours   = Number(match[1]);
-        const minutes = Number(match[2]);
-
-        this.sendAction("on-change", {
-          hours,
-          minutes
-        });
-      } else {
-        this.sendAction("on-invalid", value);
-      }
-    }
-  },
-
-  _setFromValue(value) {
-    if (value) {
-      this.setProperties(value);
+  incrementHours(amnt=1) {
+    const hours = this.get("hours");
+    if (isNone(hours)) {
+      this.set("hours", 0);
     } else {
-      this.setProperties({ hours: null, minutes: null });
+      this.set("hours", mod(hours + amnt, 24)); // TODO - 12 for 12hour clock
     }
+
+    this.reRenderAfterUserInput();
   },
+
+  decrementHours() {
+    this.incrementHours(-1);
+  },
+
+  setHours(hours) {
+    this.set("hours", hours);
+    this.reRenderAfterUserInput();
+  },
+
+  setHoursDigit2(hours) {
+    const current = this.get("hours");
+    if (isNone(current)) {
+      this.set("hours", hours);
+    } else {
+      this.set("hours", Math.min(current * 10 + hours, 23)); // TODO - 12 for 12 hour clock
+    }
+
+    this.reRenderAfterUserInput();
+  },
+
+  incrementMinutes(amnt=1) {
+    const minutes = this.get("minutes");
+    if (isNone(minutes)) {
+      this.set("minutes", 0);
+    } else {
+      this.set("minutes", mod(minutes + amnt, 60));
+    }
+
+    this.reRenderAfterUserInput();
+  },
+
+  decrementMinutes() {
+    this.incrementMinutes(-1);
+  },
+
+  setMinutes(minutes) {
+    this.set("minutes", minutes);
+    this.reRenderAfterUserInput();
+  },
+
+  setMinutesDigit2(minutes) {
+    const current = this.get("minutes");
+    if (isNone(current)) {
+      this.set("minutes", minutes);
+    } else {
+      this.set("minutes", current * 10 + minutes);
+    }
+
+    this.reRenderAfterUserInput();
+  },
+
+  changePeriod() {
+    const period = this.get("period");
+    this.set("period", period === "am" ? "pm" : "am");
+    this.reRenderAfterUserInput();
+  },
+
+  // _handleChangeEvent() {
+  //   this._processNewValue(this.readDOMAttr('value'));
+  // },
+  //
+  // _processNewValue(rawValue) {
+  //   const value = this.sanitizeInput(rawValue);
+  //
+  //   if (this._sanitizedValue !== value) {
+  //     this._sanitizedValue = value;
+  //
+  //     const match = value.match(/^(\d{1,2}):(\d{2})\W*(am|pm)?$/);
+  //     if (match) {
+  //       const hours   = Number(match[1]);
+  //       const minutes = Number(match[2]);
+  //
+  //       this.sendAction("on-change", {
+  //         hours,
+  //         minutes
+  //       });
+  //     } else {
+  //       this.sendAction("on-invalid", value);
+  //     }
+  //   }
+  // },
+
+  // _setFromValue(value) {
+  //   if (value) {
+  //     this.setProperties(value);
+  //   } else {
+  //     this.setProperties({ hours: null, minutes: null });
+  //   }
+  // },
 
   sanitizeInput(input) {
     return input || '';
   },
 
-  didReceiveAttrs() {
-    this._super(...arguments);
-    this._setFromValue(this.get('value'));
+  didRender() {
+    this.updateDOMValue();
+  },
+
+  // TODO - could use attribute binding but we want to re-focus
+  //        and if we do that in run.next or afterRender we still get a cursor change
+  reRenderAfterUserInput() {
+    this.updateDOMValue();
+    this.get("stateManager").send("focusIn");
+  },
+
+  updateDOMValue() {
+    const value = this.get("_value");
+    this.get("element").value = value;
   }
+
 });
