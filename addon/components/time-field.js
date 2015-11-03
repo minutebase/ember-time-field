@@ -6,10 +6,10 @@ const {
   computed
 } = Ember;
 
-import pad from '../../utils/pad';
-import mod from '../../utils/mod';
-import EventManager from '../../states/manager';
-import { KEY_CODES } from '../../utils/codes';
+import pad from '../utils/pad';
+import mod from '../utils/mod';
+import EventManager from '../states/manager';
+import { KEY_CODES } from '../utils/codes';
 
 const RANGES = {
   HOUR:   { START: 0, END: 2 },
