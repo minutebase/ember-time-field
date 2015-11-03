@@ -7,27 +7,15 @@ const {
 } = Ember;
 
 import pad from '../../utils/pad';
-
-const KEY_CODES = {
-  UP:    38,
-  DOWN:  40,
-  LEFT:  37,
-  RIGHT: 39,
-  TAB:   9
-};
+import mod from '../../utils/mod';
+import EventManager from '../../states/manager';
+import { KEY_CODES } from '../../utils/codes';
 
 const RANGES = {
   HOUR:   { START: 0, END: 2 },
   MINUTE: { START: 3, END: 5 },
   PERIOD: { START: 6, END: 8 }
 };
-
-// wrapping mod
-function mod(n, m) {
-  return ((n % m) + m) % m;
-}
-
-import EventManager from '../../states/manager';
 
 export default Component.extend({
   classNames: 'time-field',
