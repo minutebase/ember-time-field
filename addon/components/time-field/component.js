@@ -1,5 +1,11 @@
 import Ember from 'ember';
 
+const {
+  Component,
+  isNone,
+  computed
+} = Ember;
+
 const KEY_CODES = {
   UP:    38,
   DOWN:  40,
@@ -8,11 +14,11 @@ const KEY_CODES = {
   TAB:   9
 };
 
-const {
-  Component,
-  isNone,
-  computed
-} = Ember;
+const RANGES = {
+  HOUR:   { START: 0, END: 2 },
+  MINUTE: { START: 3, END: 5 },
+  PERIOD: { START: 6, END: 8 }
+};
 
 function pad(val) {
   const str = String(val);
@@ -209,10 +215,6 @@ const PeriodFocusedState  = State.create({
 const UnfocusedState = State.create({
   focusIn(manager) {
     manager.transitionTo("focused.hours");
-  },
-
-  click(manager) {
-    manager.transitionTo("focused.hours");
   }
 });
 
@@ -223,10 +225,6 @@ const FocusedState = State.create({
 
   focusOut(manager) {
     manager.transitionTo("unfocused");
-  },
-
-  click() {
-    console.log("clicked, figure out where");
   },
 
   left() {
@@ -337,30 +335,48 @@ export default Component.extend({
   },
 
   focusIn() {
-    this.get("stateManager").send("focusIn");
+    // ignore if part of click otherwise we move focus too early
+    if (!this._handlingClick) {
+      this.get("stateManager").send("focusIn");
+    }
   },
 
   focusOut() {
     this.get("stateManager").send("focusOut");
   },
 
-  click() {
-    this.get("stateManager").send("click");
+  mouseDown() {
+    this._handlingClick = true;
+  },
+
+  mouseUp() {
+    this._handlingClick = false;
+
+    const el = this.get("element");
+    const cursor = el.selectionStart;
+
+    if (cursor >= RANGES.HOUR.START && cursor <= RANGES.HOUR.END) {
+      this.get("stateManager").transitionTo("focused.hours");
+    } else if (cursor >= RANGES.MINUTE.START && cursor <= RANGES.MINUTE.END) {
+      this.get("stateManager").transitionTo("focused.minutes");
+    } else if (cursor >= RANGES.PERIOD.START && cursor <= RANGES.PERIOD.END) {
+      this.get("stateManager").transitionTo("focused.period");
+    }
   },
 
   // [--]:-- --
   selectHours() {
-    this.get("element").setSelectionRange(0, 2);
+    this.get("element").setSelectionRange(RANGES.HOUR.START, RANGES.HOUR.END);
   },
 
   // --:[--] --
   selectMinutes() {
-    this.get("element").setSelectionRange(3, 5);
+    this.get("element").setSelectionRange(RANGES.MINUTE.START, RANGES.MINUTE.END);
   },
 
   // --:-- [--]
   selectPeriod() {
-    this.get("element").setSelectionRange(6, 8);
+    this.get("element").setSelectionRange(RANGES.PERIOD.START, RANGES.PERIOD.END);
   },
 
   incrementHours(amnt=1) {
