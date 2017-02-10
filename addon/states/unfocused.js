@@ -6,5 +6,8 @@ export default State.create({
   },
   refocus() {
     // no-op
+  },
+  focusOut() {
+    // no-op
   }
 });
