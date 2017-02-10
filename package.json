@@ -1,6 +1,6 @@
 {
   "name": "ember-time-field",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Time field for ember with keyboard navigation",
   "directories": {
     "doc": "doc",
