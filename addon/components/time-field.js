@@ -23,7 +23,8 @@ export default Component.extend({
   tagName: 'input',
   type: 'text',
   autocomplete: false,
-  attributeBindings: ['type', 'placeholder', 'name', 'autocomplete'],
+  disabled: false,
+  attributeBindings: ['type', 'placeholder', 'name', 'autocomplete', 'disabled'],
 
   hour12: false,
 
