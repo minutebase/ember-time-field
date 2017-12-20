@@ -4,10 +4,14 @@ export default State.create({
   focusIn(manager) {
     manager.transitionTo("focused.hours");
   },
-  refocus() {
-    // no-op
-  },
-  focusOut() {
-    // no-op
-  }
+
+  // it's possible to receive events after losing focus, due to runloop shenanigans
+  // just swallow them as no-ops
+  refocus() {},
+  focusOut() {},
+  up() {},
+  down() {},
+  left() {},
+  right() {},
+  key() {}
 });
