@@ -1,10 +1,6 @@
-import Ember from 'ember';
-
-const {
-  Component,
-  isNone,
-  computed
-} = Ember;
+import Component from '@ember/component';
+import { computed, get } from '@ember/object';
+import { isNone } from '@ember/utils';
 
 import pad from '../utils/pad';
 import mod from '../utils/mod';
@@ -40,7 +36,7 @@ export default Component.extend({
     }));
   },
 
-  hoursForRange: Ember.computed("hours", "hour12", {
+  hoursForRange: computed("hours", "hour12", {
     get() {
       const { hours, hour12 } = this.getProperties("hours", "hour12");
       if (isNone(hours)) {
@@ -264,8 +260,8 @@ export default Component.extend({
     let period  = "am";
 
     if (value) {
-      hours   = Ember.get(value, "hours");
-      minutes = Ember.get(value, "minutes");
+      hours   = get(value, "hours");
+      minutes = get(value, "minutes");
       if (hours >= 12) {
         period = "pm";
       }
@@ -289,7 +285,7 @@ export default Component.extend({
 
     let { hours, minutes } = this.getProperties("hours", "minutes");
 
-    this.sendAction("on-change", {
+    this.get("on-change")({
       hours, minutes
     });
   },
