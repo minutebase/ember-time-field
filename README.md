@@ -36,7 +36,6 @@ ember install ember-time-field
 
 * `git clone` this repository
 * `npm install`
-* `bower install`
 
 ## Running
 
