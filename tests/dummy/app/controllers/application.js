@@ -1,12 +1,14 @@
-import Ember from 'ember';
+import { computed } from '@ember/object';
+import Controller from '@ember/controller';
+import { isNone } from '@ember/utils';
 
 import pad from 'ember-time-field/utils/pad';
 
 function timePart(property) {
-  return Ember.computed(property, {
+  return computed(property, {
     get() {
       const value = this.get(property);
-      if (Ember.isNone(value)) {
+      if (isNone(value)) {
         return '--';
       }
 
@@ -15,7 +17,7 @@ function timePart(property) {
   });
 }
 
-export default Ember.Controller.extend({
+export default Controller.extend({
   time: null,
   hour12: false,
 

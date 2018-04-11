@@ -1,11 +1,11 @@
-import StateManager from "ember-states/state-manager";
+import StateManager from "../utils/state-manager";
+import { state } from "../utils/state";
 
 import UnfocusedState from './unfocused';
 import FocusedState from './focused';
 
 export default StateManager.extend({
-  // enableLogging: true,
   initialState: 'unfocused',
-  unfocused:    UnfocusedState,
-  focused:      FocusedState
+  unfocused: state(UnfocusedState),
+  focused:  state(FocusedState)
 });

@@ -1,13 +1,14 @@
-import State from "ember-states/state";
+import State, { state } from "../utils/state";
+
 import {
   isNumberCode,
   keyCodeToNumber
 } from '../utils/codes';
 
-export default State.create({
+export default State.extend({
   initialState: "digit1",
 
-  digit1: State.create({
+  digit1: state(State, {
     key(manager, code) {
       if (!isNumberCode(code)) {
         return; // no-op
@@ -24,7 +25,7 @@ export default State.create({
     }
   }),
 
-  digit2: State.create({
+  digit2: state(State, {
     key(manager, code) {
       if (!isNumberCode(code)) {
         return; // no-op

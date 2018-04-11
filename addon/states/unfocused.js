@@ -1,6 +1,6 @@
-import State from "ember-states/state";
+import State from "../utils/state";
 
-export default State.create({
+export default State.extend({
   focusIn(manager) {
     manager.transitionTo("focused.hours");
   },
