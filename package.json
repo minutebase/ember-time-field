@@ -1,6 +1,6 @@
 {
   "name": "ember-time-field",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Time field for ember with keyboard navigation",
   "keywords": [
     "ember-addon",
