@@ -4,7 +4,7 @@ import { isNone } from '@ember/utils';
 
 import pad from '../utils/pad';
 import mod from '../utils/mod';
-import EventManager from '../states/manager';
+import StateManager from '../states/manager';
 import { KEY_CODES } from '../utils/codes';
 
 const RANGES = {
@@ -31,7 +31,7 @@ export default Component.extend({
 
   init() {
     this._super();
-    this.set("stateManager", EventManager.create({
+    this.set("stateManager", StateManager.create({
       input: this
     }));
   },

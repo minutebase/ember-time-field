@@ -1,13 +1,13 @@
-import State from "ember-states/state";
+import State, { state } from "../utils/state";
 
 import HoursFocusedState   from './hours-focused';
 import MinutesFocusedState from './minutes-focused';
 import PeriodFocusedState  from './period-focused';
 
-export default State.create({
-  hours:    HoursFocusedState,
-  minutes:  MinutesFocusedState,
-  period:   PeriodFocusedState,
+export default State.extend({
+  hours:    state(HoursFocusedState),
+  minutes:  state(MinutesFocusedState),
+  period:   state(PeriodFocusedState),
 
   focusOut(manager) {
     manager.transitionTo("unfocused");
