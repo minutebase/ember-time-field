@@ -1,6 +1,6 @@
 # Ember Time Field Changelog
 
-### master
+### v0.3.0
 
 - Removed ember-states dependency
 - Updated to ember-cli 3.0.2
