@@ -55,6 +55,21 @@ export default State.extend({
 
   down(manager) {
     manager.get("input").decrementHours();
+  },
+  
+  key(manager, code) {
+    if (!isNumberCode(code)) {
+      return; // no-op
+    }
+
+    const num = keyCodeToNumber(code);
+    manager.get("input").setHours(num);
+
+    if (num <= 2) {
+      manager.transitionTo("digit2");
+    } else {
+      manager.transitionTo("minutes");
+    }
   }
 
 });
