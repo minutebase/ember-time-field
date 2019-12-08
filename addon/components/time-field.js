@@ -292,11 +292,12 @@ export default Component.extend({
 
   updateDOMValue() {
     const value = this.get("_value");
-    this.get("element").value = value;
+    const element = this.get("element");
+    element.value = value;
 
     // trigger standard events in-case anything else is listening
-    this.$().trigger("input");
-    this.$().trigger("change");
+    element.dispatchEvent(new Event("input"));
+    element.dispatchEvent(new Event("change"));
   }
 
 });
