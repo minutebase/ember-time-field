@@ -32,4 +32,28 @@ module('Integration | Component | time-field', function(hooks) {
     });
   });
 
+  module('with required attribute', function() {
+    test('it renders input without required attribute', async function(assert) {
+      await render(hbs`{{time-field required=false}}`);
+      assert.strictEqual(this.element.querySelector('input').getAttribute('required'), null);
+    });
+
+    test('it renders input with required attribute', async function(assert) {
+      await render(hbs`{{time-field required=true}}`);
+      assert.strictEqual(this.element.querySelector('input').getAttribute('required'), '');
+    });
+  });
+
+  module('with disabled attribute', function() {
+    test('it renders input without disabled attribute', async function(assert) {
+      await render(hbs`{{time-field disabled=false}}`);
+      assert.strictEqual(this.element.querySelector('input').getAttribute('disabled'), null);
+    });
+
+    test('it renders input with disabled attribute', async function(assert) {
+      await render(hbs`{{time-field disabled=true}}`);
+      assert.strictEqual(this.element.querySelector('input').getAttribute('disabled'), '');
+    });
+  });
+
 });
