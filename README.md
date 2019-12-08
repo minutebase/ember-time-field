@@ -11,7 +11,7 @@ ember install ember-time-field
 ## Usage
 
 ```handlebars
-{{time-field on-change=(action "timeChanged") value=time hour12=true}}
+<TimeField @on-change={{action "timeChanged"}} @value={{this.time}} @hour12={{true}} />
 ```
 
 * `value` is a `Time`
