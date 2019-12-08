@@ -20,7 +20,8 @@ export default Component.extend({
   type: 'text',
   autocomplete: false,
   disabled: false,
-  attributeBindings: ['type', 'placeholder', 'name', 'autocomplete', 'disabled'],
+  required: false,
+  attributeBindings: ['type', 'placeholder', 'name', 'autocomplete', 'disabled', 'required'],
 
   hour12: false,
 
